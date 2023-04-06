@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StoreMessageEvent;
 use App\Http\Requests\Message\StoreRequest;
 //use App\Http\Resources\Message\MessageResource;
 use App\Http\Resources\Message\MessageResource;
@@ -12,7 +13,7 @@ class MessageController extends Controller
 {
     public function index()
     {
-        $messages = Message::all();
+        $messages = Message::latest()->get();
         $messages = MessageResource::collection($messages)->resolve();
         return inertia('Message/Index', compact('messages'));
     }
@@ -21,6 +22,8 @@ class MessageController extends Controller
     {
         $data = $request->validated();
         $message = Message::create($data);
+
+        broadcast(new StoreMessageEvent($message))->toOthers();
 
         return MessageResource::make($message)->resolve();
     }
